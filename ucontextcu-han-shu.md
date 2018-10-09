@@ -2,13 +2,9 @@
 
 getcontext, setcontext —— 获取或者设置用户上下文
 
-
-
 概要
 
 \#include &lt;ucontext.h&gt;
-
-
 
 int getcontext\(ucontext\_t \*ucp\);
 
@@ -20,19 +16,19 @@ int setcontext\(const ucontext\_t \*ucp\);
 
 mcontext\_t数据结构是依赖机器和不透明的。ucontext\_t数据结构至少包含下面的字段：
 
-
-
 typedef struct ucontext {
 
-    struct ucontext \*uc\_link;
+```
+struct ucontext \*uc\_link;
 
-    sigset\_t         uc\_sigmask;
+sigset\_t         uc\_sigmask;
 
-    stack\_t          uc\_stack;
+stack\_t          uc\_stack;
 
-    mcontext\_t       uc\_mcontext;
+mcontext\_t       uc\_mcontext;
 
-    ...
+...
+```
 
 } ucontext\_t;
 
@@ -46,13 +42,9 @@ setcontext\(\)函数恢复用户上下文为ucp所指向的上下文。成功调
 
 如果上下文被makecontext\(\)产生的，切换到该上下文，程序的执行切换到makecontext\(\)调用所指定的第二个参数的函数上。当该函数返回时，我们继续传入makecontext\(\)中的第一个参数的上下文中uc\_link所指向的上下文。如果是NULL，程序结束。
 
-
-
 返回值
 
 成功时，getcontext\(\)返回0，setcontext\(\)不返回。错误时，都返回-1并且赋值合适的errno。
-
-
 
 注意
 
@@ -60,19 +52,13 @@ setcontext\(\)函数恢复用户上下文为ucp所指向的上下文。成功调
 
 当信号发生时，当前的用户上下文被保存，一个新的内核为信号处理器产生的上下文被创建。不要在信号处理器中使用longjmp:它是未定义的行为。使用siglongjmp\(\)或者setcontext\(\)替代。
 
-
-
 名字
 
 makecontext，swapcontext —— 操控用户上下文
 
-
-
 概要
 
 \#include &lt;ucontext.h&gt;
-
-
 
 void makecontext\(ucontext\_t \*ucp, void \(\*func\)\(void\), int argc, ...\);
 
@@ -88,17 +74,11 @@ makecontext\(\)函数修改ucp所指向的上下文，ucp是被getcontext\(\)所
 
 swapcontext\(\)函数保存当前的上下文到oucp所指向的数据结构，并且设置到ucp所指向的上下文。
 
-
-
 保存了旧值oucp，跳转到ucp所指的地方
-
-
 
 返回值
 
 成功完成，swapcontext\(\)返回0。否则返回-1，并赋值合适的errno。
-
-
 
 错误
 
@@ -106,23 +86,13 @@ swapcontext\(\)函数可能会因为下面的原因失败：
 
 ENOMEM ucp参数没有足够的栈空间去完成操作。
 
-
-
 例子
 
 \#include &lt;stdio.h&gt;
 
 \#include &lt;ucontext.h&gt;
 
-
-
-
-
 static ucontext\_t ctx\[3\];
-
-
-
-
 
 static void
 
@@ -130,17 +100,15 @@ f1 \(void\)
 
 {
 
-    puts\("start f1"\);
+```
+puts\("start f1"\);
 
-    swapcontext\(&ctx\[1\], &ctx\[2\]\);
+swapcontext\(&ctx\[1\], &ctx\[2\]\);
 
-    puts\("finish f1"\);
+puts\("finish f1"\);
+```
 
 }
-
-
-
-
 
 static void
 
@@ -148,17 +116,15 @@ f2 \(void\)
 
 {
 
-    puts\("start f2"\);
+```
+puts\("start f2"\);
 
-    swapcontext\(&ctx\[2\], &ctx\[1\]\);
+swapcontext\(&ctx\[2\], &ctx\[1\]\);
 
-    puts\("finish f2"\);
+puts\("finish f2"\);
+```
 
 }
-
-
-
-
 
 int
 
@@ -166,45 +132,47 @@ main \(void\)
 
 {
 
-    char st1\[8192\];
+```
+char st1\[8192\];
 
-    char st2\[8192\];
-
-
-
-
-
-    getcontext\(&ctx\[1\]\);
-
-    ctx\[1\].uc\_stack.ss\_sp = st1;
-
-    ctx\[1\].uc\_stack.ss\_size = sizeof st1;
-
-    ctx\[1\].uc\_link = &ctx\[0\];
-
-    makecontext\(&ctx\[1\], f1, 0\);
+char st2\[8192\];
 
 
 
 
 
-    getcontext\(&ctx\[2\]\);
+getcontext\(&ctx\[1\]\);
 
-    ctx\[2\].uc\_stack.ss\_sp = st2;
+ctx\[1\].uc\_stack.ss\_sp = st1;
 
-    ctx\[2\].uc\_stack.ss\_size = sizeof st2;
+ctx\[1\].uc\_stack.ss\_size = sizeof st1;
 
-    ctx\[2\].uc\_link = &ctx\[1\];
+ctx\[1\].uc\_link = &ctx\[0\];
 
-    makecontext\(&ctx\[2\], f2, 0\);
-
-
+makecontext\(&ctx\[1\], f1, 0\);
 
 
 
-    swapcontext\(&ctx\[0\], &ctx\[2\]\);
 
-    return 0;
+
+getcontext\(&ctx\[2\]\);
+
+ctx\[2\].uc\_stack.ss\_sp = st2;
+
+ctx\[2\].uc\_stack.ss\_size = sizeof st2;
+
+ctx\[2\].uc\_link = &ctx\[1\];
+
+makecontext\(&ctx\[2\], f2, 0\);
+
+
+
+
+
+swapcontext\(&ctx\[0\], &ctx\[2\]\);
+
+return 0;
+```
 
 }
 
@@ -226,8 +194,6 @@ ucontext性能小试：
 
 运行环境为我的mac下通过虚拟机开启的centos64位系统，不代表一般情况，正常在linux实体机上应该会好很多吧
 
-
-
 1 单纯的getcontext:
 
 function\[ getcontext\(&ctx\) \] count\[ 10000000 \]
@@ -239,8 +205,6 @@ total CPU time\[ 1380.00 ms\] avg\[ 0.14 us\]
 user CPU time\[ 560.00 ms\] avg\[ 0.06 us\]
 
 system CPU time\[ 820.00 ms\] avg\[ 0.08 us\]
-
-
 
 2 新函数的协程调用
 
@@ -256,11 +220,7 @@ user CPU time\[ 280.00 ms\] avg\[ 0.28 us\]
 
 system CPU time\[ 270.00 ms\] avg\[ 0.27 us\]
 
-
-
 每秒百万级别的调用性能。
-
-
 
 ucontext协程的实际使用：
 
@@ -269,4 +229,6 @@ ucontext协程的实际使用：
 协程的栈采用malloc进行堆分配，分配后的空间在64位系统中和栈的使用一致，地址递减使用，uc\_stack.uc\_size设置的大小好像并没有多少实际作用，使用中一旦超过已分配的堆大小，会继续向地址小的方向的堆去使用，这个时候就会造成堆内存的越界使用，更改之前在堆上分配的数据，造成各种不可预测的行为，coredump后也找不到实际原因。
 
 对使用协程函数的栈大小的预估，协程函数中调用其他所有的api的中的局部变量的开销都会分配到申请给协程使用的内存上，会有一些不可预知的变量，比如调用第三方API，第三方API中有非常大的变量，实际使用过程中开始时可以采用mmap分配内存，对分配的内存设置GUARD\_PAGE进行mprotect保护，对于内存溢出，准确判断位置，适当调整需要分配的栈大小。
+
+![](/assets/importucontext.png)
 
