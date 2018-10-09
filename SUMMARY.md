@@ -8,4 +8,5 @@
 * [Goroutine背后的系统知识](goroutinebei-hou-de-xi-tong-zhi-shi.md)
 * [为什么Golang需要单独开发一个Goroutine](wei-shi-yao-golangxu-yao-dan-du-kai-fa-yi-ge-goroutine.md)
 * [goroutine调度机制](goroutinediao-du-ji-zhi.md)
+* [goroutine与channel](goroutineyu-channel.md)
 
