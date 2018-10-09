@@ -32,5 +32,9 @@ Go语言的线程模型就是一种特殊的两级线程模型。暂且叫它“
 
 三者关系如下图所示：
 
-![](/assets/mpg.png)
+![](/assets/mpg.png)以上这个图讲的是两个线程\(内核线程\)的情况。一个M会对应一个内核线程，一个M也会连接一个上下文P，一个上下文P相当于一个“处理器”，一个上下文连接一个或者多个Goroutine。P\(Processor\)的数量是在启动时被设置为环境变量GOMAXPROCS的值，或者通过运行时调用函数`runtime.GOMAXPROCS()`进行设置。Processor数量固定意味着任意时刻只有固定数量的线程在运行go代码。Goroutine中就是我们要执行并发的代码。图中P正在执行的`Goroutine`为蓝色的；处于待执行状态的`Goroutine`为灰色的，灰色的`Goroutine`形成了一个队列`runqueues`
+
+三者关系的宏观的图为：
+
+
 
