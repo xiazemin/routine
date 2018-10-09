@@ -232,3 +232,101 @@ ucontext协程的实际使用：
 
 ![](/assets/importucontext.png)
 
+现代Unix系统都在ucontext.h中提供用于上下文切换的函数，这些函数有getcontext, setcontext，swapcontext 和makecontext。其中，getcontext用于保存当前上下文，setcontext用于切换上下文，swapcontext会保存当前上下文并切换到另一个上下文，makecontext创建一个新的上下文。实现用户线程的过程是：我们首先调用getcontext获得当前上下文，然后修改ucontext\_t指定新的上下文。同样的，我们需要开辟栈空间，但是这次实现的线程库要涉及栈生长的方向。然后我们调用makecontext切换上下文，并指定用户线程中要执行的函数。
+
+       在这种实现中还有一个挑战，即一个线程必须可以主动让出CPU给其它线程。swapcontext函数可以完成这个任务，图4展示了一个这种实现的样例程序，child线程和parent线程不断切换以达到多线程的效果。在libfiber-uc.c文件中可以看到完整的实现。
+
+\#include 
+
+\#include 
+
+\#include 
+
+// 64kB stack
+
+\#define FIBER\_STACK 1024\*64
+
+ucontext\_t child, parent;
+
+// The child thread will execute this function
+
+void threadFunction\(\)
+
+{
+
+printf\( "Child fiber yielding to parent" \);
+
+swapcontext\( &child, &parent \);
+
+printf\( "Child thread exiting\n" \);
+
+swapcontext\( &child, &parent \);
+
+}
+
+int main\(\)
+
+{
+
+// Get the current execution context
+
+getcontext\( &child \);
+
+// Modify the context to a new stack
+
+child.uc\_link = 0;
+
+child.uc\_stack.ss\_sp = malloc\( FIBER\_STACK \);
+
+child.uc\_stack.ss\_size = FIBER\_STACK;
+
+child.uc\_stack.ss\_flags = 0; 
+
+if \( child.uc\_stack.ss\_sp == 0 \)
+
+{
+
+perror\( "malloc: Could not allocate stack" \);
+
+exit\( 1 \);
+
+}
+
+// Create the new context
+
+printf\( "Creating child fiber\n" \);
+
+makecontext\( &child, &threadFunction, 0 \);
+
+// Execute the child context
+
+printf\( "Switching to child fiber\n" \);
+
+swapcontext\( &parent, &child \);
+
+printf\( "Switching to child fiber again\n" \);
+
+swapcontext\( &parent, &child \);
+
+// Free the stack
+
+free\( child.uc\_stack.ss\_sp \);
+
+printf\( "Child fiber returned and stack freed\n" \);
+
+return 0;
+
+}
+
+图4用makecontext实现线程
+
+用户级线程的抢占
+
+
+
+       抢占实现的一个最重要的因素就是定时触发的计时器中断，它的存在使得我们能够中断当前程序的执行，异步对进程的时间片消耗情况进行统计，并在必要的时候（可能是时间片耗尽，也可能是一个高优先级的程序就绪）从当前进程调度到其它进程去执行。
+
+       对于用户空间程序来说，与内核空间的中断相对应的就是信号，它和中断一样都是异步触发，并能引起执行流的跳转。所以要想实现用户级线程的抢占，我们可以借助定时器信号\(SIGALRM\)，必要时在信号处理程序内部进行上下文的切换
+
+
+
