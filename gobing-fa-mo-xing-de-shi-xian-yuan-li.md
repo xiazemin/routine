@@ -55,5 +55,7 @@ Go语言的线程模型就是一种特殊的两级线程模型。暂且叫它“
 
 Go的做法倒也直接，从其他P中偷一半
 
-![](/assets/importq.png)
+![](/assets/importq.png)http://morsmachine.dk/go-scheduler
+
+https://talks.golang.org/2012/concurrency.slide\#56
 
